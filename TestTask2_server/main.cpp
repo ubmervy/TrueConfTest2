@@ -11,16 +11,16 @@
 #include <bitset>
 
 #define port	1100
-#define msg_length_bytes 4
+#define length_bytes 4
 
 #pragma comment(lib, "Ws2_32.lib")
 
 int main(void) {
 	struct sockaddr_in stSockAddr;
-	char buf[10];
-	int left = msg_length_bytes;
+	int left = length_bytes;
 	int received = 0;
 	uint32_t len_buf = 0;
+	//std::ofstream os;
 
 	//startup WSA
 	WSADATA wsaData;
@@ -64,6 +64,10 @@ int main(void) {
 		exit(EXIT_FAILURE);
 	}
 
+	char* filename = "received.txt";
+	std::ofstream os;
+
+	os.clear();
 	//wait for incoming connections
 	for (;;)
 	{
@@ -78,36 +82,73 @@ int main(void) {
 		}
 
 		//receive data
+		char* buf;
 		int iRecvResult;
+		int total_bytes = length_bytes;
+
 		int received_bytes = 0;
-		int total_bytes = 20;
-		std::ofstream os("received.txt", std::ifstream::binary);
+		int header_bytes = 16;
+		//std::ofstream os("received.txt", std::ifstream::binary);
 
+		/*iRecvResult = recv(i32ConnectFD, buf, header_bytes, 0);
+		memcpy(&total_bytes, buf, 4);
+		memcpy(&filename, buf + 4, 12);
+		std::cout << "length = " << total_bytes << std::endl;
+		std::cout << "filename = " << filename << std::endl;*/
 
-		while (received_bytes < total_bytes) {
-			memset(buf, 0, 10);
-			iRecvResult = recv(i32ConnectFD, buf, 10, 0);
-			std::cout << "received_bytes = " << iRecvResult << std::endl;
-
-
-			if ((iRecvResult == SOCKET_ERROR) || (iRecvResult == 0))
+		int length_received = 0;
+		u_long messageLength;
+		while (length_received < length_bytes){
+			int read = recv(i32ConnectFD, ((char*)&messageLength) + length_received, length_bytes - length_received, 0);
+			if ((read == SOCKET_ERROR) || (read == 0))
 			{
 				int er_code = WSAGetLastError();
 				printf(" Receiving data failed.\n Error code: %d\n", er_code);
 				closesocket(i32SocketFD);
 				exit(EXIT_FAILURE);
 			}
+			length_received += read;
+		}
+		messageLength = ntohl(messageLength);
 
-			if (os)
-			{
-				//buf[iRecvResult] = NULL;
-				os.write(buf, sizeof(buf));
+		buf = new char[messageLength];
+		memset(buf, 0, messageLength);
+
+
+		//os.open(filename, std::ofstream::out | std::ofstream::app);
+		//std::ofstream os(filename, std::ifstream::binary);
+		while (received_bytes < messageLength) {
+			if (received_bytes == 0) {
+				os.open(filename, std::ios::trunc);
+				os.clear();
+				os.close();
 			}
 
-			received_bytes += iRecvResult;
+			memset(buf, 0, messageLength);
+			iRecvResult = recv(i32ConnectFD, buf, 10, 0);
+			std::cout << "received_bytes = " << iRecvResult << std::endl;
 
+			if ((iRecvResult == SOCKET_ERROR) || (iRecvResult == 0)){
+				int er_code = WSAGetLastError();
+				printf(" Receiving data failed.\n Error code: %d\n", er_code);
+				closesocket(i32SocketFD);
+				exit(EXIT_FAILURE);
+			}
+			else {
+
+				received_bytes += iRecvResult;
+
+
+				//buf[iRecvResult] = NULL;
+				//os.write(buf, strlen(buf));
+				os.open(filename, std::ios_base::out | std::ios_base::binary | std::ios::app);
+				if (os)
+				{
+					os << buf;
+					os.close();
+				}
+			}
 		}
-		os.close();
 
 		//close connection and socket
 		shutdown(i32ConnectFD, 2);
