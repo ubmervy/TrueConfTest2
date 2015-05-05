@@ -4,49 +4,60 @@
 #include <iostream>
 #include <fstream>
 #include <stdint.h>
-#include <bitset>
+#include <vector>
+
+
 #pragma comment(lib, "Ws2_32.lib")
 
-#define msg_length_bytes 4
-#define filename_bytes 12
-
-//place value in n-byte 
-void place_in_n_bytes(size_t bytes_num, char* buffer, size_t value) {
-	for (int i = 0; i < bytes_num; ++i) {
-		buffer[i] = (value >> (bytes_num - i - 1) * 8) & 0xFF;
-	}
-}
+#define length_bytes 4
+#define max_chunk_size 10
 
 //send file
-int send_all(int sock, char *buffer, int len) {
-	int nsent;
+int send_parts(int sock, char *buffer, int len, int chunk_size) {
+	int nsent = 0;
 
 	while (len > 0) {
-
-		nsent = send(sock, buffer, 10, 0);
-		if (nsent == -1) // error
+		/*std::cout << "nsent: " << nsent << std::endl;
+		for (int i = 0; i < chunk_size; ++i) {
+		std::cout << buffer[i];
+		}
+		std::cout << std::endl;*/
+		nsent = send(sock, buffer, chunk_size, 0);
+		if (nsent == -1)
 			return -1;
 
 		buffer += nsent;
 		len -= nsent;
 	}
-	return 0; // ok, all data sent
+	return 0;
+}
+inline int send_parts(int sock, char *buffer, int len) {
+	if (send_parts(sock, buffer, len, len) == -1) {
+		return -1;
+	}
+	return 0;
 }
 
 int main(int argc, char* argv[])
 {
 	struct sockaddr_in stSockAddr;
-	int Res;
-	std::string filename;
 	std::string server_addr;
-	
+	std::vector<char> filename;
+
 	//get file name and server address
 	if (argc != 3) {
 		perror("Two argument must be provided: 1 - file name, 2 - server address");
 		exit(EXIT_FAILURE);
 	}
 	else {
-		filename = argv[1];
+		for (unsigned int i = 0; i < strlen(argv[1]); ++i){
+			if (argv[1][i] == '\0')
+				continue;
+			filename.emplace_back(argv[1][i]);
+
+		}
+		filename.emplace_back('\0');
+
 		server_addr = argv[2];
 	}
 
@@ -74,7 +85,7 @@ int main(int argc, char* argv[])
 
 	stSockAddr.sin_family = AF_INET;
 	stSockAddr.sin_port = htons(1100);
-	Res = inet_pton(AF_INET, server_addr.c_str(), &stSockAddr.sin_addr);
+	int Res = inet_pton(AF_INET, server_addr.c_str(), &stSockAddr.sin_addr);
 
 	if (0 > Res)
 	{
@@ -98,31 +109,22 @@ int main(int argc, char* argv[])
 	}
 
 	//read file
-	size_t length;
-	char* buffer;
-	int header_bytes = msg_length_bytes + filename_bytes;
-	std::ifstream is(filename, std::ifstream::binary);
+	size_t length = 0;
+	std::vector<char> buffer_filedata;
+	std::string is_buf(filename.begin(), filename.end());
+	std::ifstream is((char *)is_buf.c_str(), std::ifstream::binary);
 	if (is) {
 		// get length of file:
 		is.seekg(0, is.end);
 		length = is.tellg();
-		is.seekg(0, is.beg);
 
 		// allocate memory:
-		buffer = new char[length];
-		memset(buffer, 0, length);
-
-		/*place_in_n_bytes(msg_length_bytes, buffer, length);
-		memcpy(buffer + msg_length_bytes + filename_bytes - filename.size(), (char *)filename.c_str(), filename.size());*/
-
-		/*for (int i = 0; i < 4; ++i)
-			std::cout << "sendbuffer_length = " << std::bitset<8>(buffer[i]) << std::endl;
-		for (int i = 0; i < 12; ++i)
-			std::cout << "sendbuffer_filename = " << std::bitset<8>((buffer + 4)[i]) << std::endl;*/
+		buffer_filedata.resize(length);
 
 		// read data as a block:
-		is.read(buffer, length);
-
+		is.seekg(0, is.beg);
+		is.read(buffer_filedata.data(), length);
+		buffer_filedata.emplace_back('\0');
 		is.close();
 	}
 	else {
@@ -130,13 +132,16 @@ int main(int argc, char* argv[])
 		closesocket(SocketFD);
 		exit(EXIT_FAILURE);
 	}
-	u_long messageLength = length;
-	u_long converted = htonl(messageLength); // convert from local byte order to network byte order
-	send(SocketFD, (char*)&converted, sizeof(converted), 0);
 
-	//send_all(SocketFD, buffer, header_bytes);
-	send_all(SocketFD, buffer, length);
+	//send file length
+	size_t converted_length = htonl(buffer_filedata.size()); // convert from local byte order to network byte order
+	send_parts(SocketFD, (char*)&converted_length, sizeof(converted_length));
 
+	//send filename
+	send_parts(SocketFD, filename.data(), (filename.size())*sizeof(char));
+
+	//send file data
+	send_parts(SocketFD, buffer_filedata.data() - 3, (buffer_filedata.size())*sizeof(char), max_chunk_size);
 	//close socket
 	closesocket(SocketFD);
 
