@@ -17,11 +17,6 @@ int send_parts(int sock, char *buffer, int len, int chunk_size) {
 	int nsent = 0;
 
 	while (len > 0) {
-		/*std::cout << "nsent: " << nsent << std::endl;
-		for (int i = 0; i < chunk_size; ++i) {
-		std::cout << buffer[i];
-		}
-		std::cout << std::endl;*/
 		nsent = send(sock, buffer, chunk_size, 0);
 		if (nsent == -1)
 			return -1;
