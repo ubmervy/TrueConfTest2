@@ -9,13 +9,10 @@
 #include <stdio.h>
 #include "Socket.h"
 #include "Exception.h"
-#pragma comment(lib, "Ws2_32.lib")
-
 
 ClientSocket::ClientSocket()
 {
 }
-
 
 ClientSocket::~ClientSocket()
 {
@@ -119,12 +116,6 @@ void ClientSocket::Send_parts(int sock, char *buffer, int len, int chunk_size) {
 		exit(EXIT_FAILURE);
 	}
 }
-
-void ClientSocket::Close()
-{
-	closesocket(SocketFD);
-}
-
 
 void ClientSocket::ExtractFilename(std::string &filename)
 {

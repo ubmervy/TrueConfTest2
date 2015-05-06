@@ -4,12 +4,9 @@
 #include <winsock2.h>
 #include <iostream>
 #include <fstream>
-#include <algorithm>
 #include <sstream>
+#include <algorithm>
 #include <vector>
-#include <sys/types.h>
-#pragma comment(lib, "Ws2_32.lib")
-
 
 ServerSocket::ServerSocket()
 {
@@ -52,8 +49,9 @@ void ServerSocket::Listen()
 		for (;;)
 		{
 			//block until an incoming connection is received
-			std::cout << "for (;;)";
+			std::cout << "Listening.." << std::endl;
 			int ConnectFD = accept(SocketFD, 0, 0);
+			std::cout << "Connection accepeted." << std::endl;
 
 			if (ConnectFD < 0) {
 				throw Exception(12, "ServerSocket: Failed to accept connection");
@@ -97,7 +95,12 @@ void ServerSocket::Listen()
 			if (messageLength == 0)
 			{
 				CreateEmptyFile(filename);
-				return;
+				std::cout << "File received." << std::endl;
+
+				shutdown(ConnectFD, 2);
+				std::cout << "Connection closed." << std::endl;
+
+				continue;
 			}
 
 			//receive file data
@@ -118,9 +121,11 @@ void ServerSocket::Listen()
 					WriteFile(filename, filedata_buf);
 				}
 			}
+			std::cout << "File received." << std::endl;
 
 			//close connection
 			shutdown(ConnectFD, 2);
+			std::cout << "Connection closed." << std::endl;
 		}
 	}
 	catch (Exception& excp) {
@@ -162,7 +167,7 @@ void ServerSocket::WriteFile(std::string filename, std::vector<char>& data_buf)
 		}
 	}
 	catch (std::ofstream::failure e) {
-		Exception excp(20, "Writing to file failed.");
+		Exception excp(20, "Fail write received data to file.");
 		excp.Handle(*this);
 	}
 }

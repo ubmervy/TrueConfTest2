@@ -29,5 +29,7 @@ Socket::Socket()
 
 Socket::~Socket()
 {
+	closesocket(SocketFD);
 	WSACleanup();
+	std::cout << "close";
 }

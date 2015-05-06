@@ -35,6 +35,5 @@ int main(int argc, char* argv[]) {
 	client_socket.SendFile(filename);
 	std::cout << filename << " is successfully sent to " << server_addr << "." << std::endl;
 	system("pause");
-	client_socket.Close();
 	return 0;
 }
