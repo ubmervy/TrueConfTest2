@@ -7,15 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestTask2_server", "TestTas
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestTask2_client", "TestTask2_client\TestTask2_client.vcxproj", "{234D2577-AE86-4C3F-AED2-6E0B378D01AB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "include", "include", "{E63F5346-58A4-4D62-B9BC-DA16E5201739}"
-	ProjectSection(SolutionItems) = preProject
-		Lib\include\HostInfo.h = Lib\include\HostInfo.h
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E6B68269-13CA-4570-BA9E-14FC3A2C0543}"
-	ProjectSection(SolutionItems) = preProject
-		Lib\src\HostInfo.cpp = Lib\src\HostInfo.cpp
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library", "Library\Library.vcxproj", "{EEDEF070-4828-4C89-8FF0-953C12A73DB1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +23,10 @@ Global
 		{234D2577-AE86-4C3F-AED2-6E0B378D01AB}.Debug|Win32.Build.0 = Debug|Win32
 		{234D2577-AE86-4C3F-AED2-6E0B378D01AB}.Release|Win32.ActiveCfg = Release|Win32
 		{234D2577-AE86-4C3F-AED2-6E0B378D01AB}.Release|Win32.Build.0 = Release|Win32
+		{EEDEF070-4828-4C89-8FF0-953C12A73DB1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EEDEF070-4828-4C89-8FF0-953C12A73DB1}.Debug|Win32.Build.0 = Debug|Win32
+		{EEDEF070-4828-4C89-8FF0-953C12A73DB1}.Release|Win32.ActiveCfg = Release|Win32
+		{EEDEF070-4828-4C89-8FF0-953C12A73DB1}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
